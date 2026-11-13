@@ -83,6 +83,8 @@ export type Board = {
   failed?: number
   /** When the first thing of the session happened. */
   firstAt?: number
+  /** When Work Atlas first ran in this session. Later than `startedAt` for a session it joined partway or that was resumed. */
+  watchedFrom?: number
   /** The session's totals, added to as each call ends: they do not depend on which calls are still in `entries`. */
   stats?: Partial<Record<StationId, StationTotals>>
   /** The session's slowest calls, longest first. */

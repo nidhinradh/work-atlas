@@ -211,9 +211,14 @@ export function classify(tool: string, input: Record<string, unknown>, ctx: Cont
 export function formatMs(ms: number): string {
   if (ms < 1000) return `${Math.max(0, Math.round(ms / 10) * 10)} ms`
   if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`
-  const m = Math.floor(ms / 60_000)
-  const s = Math.round((ms % 60_000) / 1000)
-  return `${m}m ${s.toString().padStart(2, '0')}s`
+  const two = (n: number): string => n.toString().padStart(2, '0')
+  // Whole seconds from here on, so that 59.6 s never reads as `0m 60s`.
+  const seconds = Math.round(ms / 1000)
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${two(seconds % 60)}s`
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}h ${two(minutes % 60)}m`
+  const hours = Math.round(minutes / 60)
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`
 }
 
 export function formatTokens(n: number): string {

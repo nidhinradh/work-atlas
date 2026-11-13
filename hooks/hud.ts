@@ -279,10 +279,13 @@ function telemetry(c: Ctx, w: number, rows: 1 | 2): Block {
   const removed = files.reduce((a, f) => a + (f.removed ?? 0), 0)
   // The usage window nearest its limit.
   const limit = [...(board.limits ?? [])].sort((a, z) => z.percent - a.percent)[0]
+  const isOnPlan = (board.limits ?? []).some(l => l.kind === 'five_hour' || l.kind === 'seven_day')
   const limitName = limit === undefined ? '' : limit.kind === 'five_hour' ? '5-hour limit' : limit.kind === 'seven_day' ? 'Weekly limit' : 'Spend limit'
   type Cell = { label: string; value: string; sub: string; color?: string; subColor?: string; gauge?: number }
   const all: Cell[] = [
-    { label: 'Cost', value: board.cost !== undefined ? `$${board.cost.toFixed(board.cost < 10 ? 3 : 2)}` : '—', sub: board.cost !== undefined && elapsed > 60_000 ? `$${((board.cost / elapsed) * 3_600_000).toFixed(2)}/hour` : 'this session' },
+    // The engine prices every request at API rates. On a subscription that is what the work was worth, not a charge:
+    // the plan is limited by its usage windows, which have a cell of their own.
+    { label: isOnPlan ? 'API value' : 'Cost', value: board.cost !== undefined ? `$${board.cost.toFixed(board.cost < 10 ? 3 : 2)}` : '—', sub: isOnPlan ? 'not billed' : 'whole session' },
     { label: 'Context used', value: `${ctx}%`, sub: '', color: ctxColor, gauge: ctx / 100 },
     { label: 'This turn', value: turn !== undefined ? formatMs(turnMs) : '—', sub: turn === undefined ? 'not started' : turn.endedAt === undefined ? `running · step ${board.step ?? 1}` : turn.aborted ? 'interrupted' : 'finished' },
     { label: 'Tool calls', value: `${calls}`, sub: failed > 0 ? `${failed} failed` : 'none failed', ...(failed > 0 ? { subColor: ERR } : {}) },
@@ -291,7 +294,7 @@ function telemetry(c: Ctx, w: number, rows: 1 | 2): Block {
     limit !== undefined
       ? { label: limitName, value: `${Math.round(limit.percent)}%`, sub: limit.resetsAt !== undefined && limit.resetsAt > now ? `resets in ${span(limit.resetsAt - now)}` : 'of plan used', ...(limit.percent >= 90 ? { color: ERR } : limit.percent >= 70 ? { color: AMBER } : {}) }
       : { label: 'Model', value: board.model !== undefined ? shortModel(board.model) : '—', sub: `${board.counts.model ?? 0} requests`, color: AMBER },
-    { label: 'Session', value: elapsed > 0 ? formatMs(elapsed) : '—', sub: limit !== undefined && board.model !== undefined ? shortModel(board.model) : `${board.turns.length} turn${board.turns.length === 1 ? '' : 's'}` },
+    { label: joinedLate(board) ? 'Session age' : 'Session', value: elapsed > 0 ? formatMs(elapsed) : '—', sub: joinedLate(board) ? `watched ${span(now - (board.watchedFrom ?? now))}` : limit !== undefined && board.model !== undefined ? shortModel(board.model) : `${board.turns.length} turn${board.turns.length === 1 ? '' : 's'}` },
   ]
   const perRow = rows === 2 ? 4 : clamp(Math.floor(w / 104), 3, 8)
   const cells = all.slice(0, perRow * rows)
@@ -322,6 +325,32 @@ function telemetry(c: Ctx, w: number, rows: 1 | 2): Block {
           return out
         })
         .join(''),
+  }
+}
+
+/** Whether the session was already going when Work Atlas first ran in it: resumed, or the mod installed partway. */
+const joinedLate = (board: Board): boolean => board.startedAt !== undefined && board.watchedFrom !== undefined && board.watchedFrom - board.startedAt > 120_000
+
+/**
+ * For a session Work Atlas joined late: which figures are of the whole session and which only of what it has watched.
+ * Without it a lifetime cost stands beside a count of the last few minutes as if they measured the same thing.
+ */
+function scopeNote(c: Ctx, w: number): Block | undefined {
+  const { board, now } = c
+  if (!joinedLate(board)) return undefined
+  const text = `This session began ${span(now - board.startedAt!)} ago. Work Atlas has watched the last ${span(now - board.watchedFrom!)}. ${board.cost !== undefined ? 'The dollar figure, context' : 'Context'} and usage limit cover the whole session; every other figure counts only what it has watched.`
+  const perLine = fit(w - 16, 10)
+  const lines: string[] = []
+  for (const word of text.split(' ')) {
+    const last = lines[lines.length - 1]
+    if (last !== undefined && last.length + 1 + word.length <= perLine) lines[lines.length - 1] = `${last} ${word}`
+    else lines.push(word)
+  }
+  return {
+    h: 10 + lines.length * 13,
+    draw: (x, y) =>
+      `<rect x="${n1(x)}" y="${n1(y)}" width="3" height="${6 + lines.length * 13}" fill="${AMBER}"/>` +
+      lines.map((line, i) => `<text x="${n1(x + 11)}" y="${n1(y + 12 + i * 13)}" font-size="10" fill="${DIM}">${esc(line)}</text>`).join(''),
   }
 }
 
@@ -1049,6 +1078,11 @@ export function drawHud(input: HudInput): string {
     const bar = statusBar(c, IN)
     parts.push(bar.draw(PAD, y))
     y += bar.h + GAP
+    const note = scopeNote(c, IN)
+    if (note !== undefined) {
+      parts.push(note.draw(PAD, y - 4))
+      y += note.h + GAP - 4
+    }
   }
   const room = H - y - PAD
   const isWide = IN >= 760 && room >= 220

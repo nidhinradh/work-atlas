@@ -223,7 +223,9 @@ export const register: Register = (on, options) => {
     ctx.cwd = e.cwd
     await safely(async () => {
       const startedAt = (await $.session.usage()).startedAt
-      await update($, board, b => (b.startedAt === startedAt ? b : { ...b, startedAt }))
+      const now = await $.clock.now()
+      // The first time Work Atlas runs in a session is when its own counts begin.
+      await update($, board, b => ({ ...b, startedAt, watchedFrom: b.watchedFrom ?? b.firstAt ?? now }))
     })
     await safely(() => $.command.register({ name: 'work-atlas', description: 'Open the work atlas: map, timeline and files' }))
     isTerminal = e.surface === 'terminal'

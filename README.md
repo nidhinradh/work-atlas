@@ -71,14 +71,18 @@ Eight figures stay at the top of every tab. They are always totals for the sessi
 
 | Figure | What it tells you |
 | --- | --- |
-| Cost | What the session has cost so far, and the rate per hour |
+| Cost / API value | What the session's requests come to at API prices. See the note below |
 | Context used | How full the context window is. Amber from 70%, red from 90% |
 | This turn | How long the current turn has run, and which step it is on |
 | Tool calls | How many tools were called, and how many failed |
 | Files edited | How many files were changed, and the lines added and removed |
 | Tokens | Tokens used, and the share served from the cache |
 | Usage limit | How much of your 5-hour or weekly limit is used, and when it resets. Shown when your account reports one; otherwise the model |
-| Session | How long the session has run |
+| Session | How long ago the session began |
+
+**About the dollar figure.** Claude Code prices every request in the session at pay-per-token API rates, and Work Atlas shows that total. If you pay for the API, it is what the session cost, and the cell is labelled **Cost**. If you are on a subscription, nothing is charged per session and nothing is deducted from what you pay: the figure is what the same work would have cost on the API. The cell is then labelled **API value** and says **not billed**. What a subscription does limit is usage within its 5-hour and weekly windows, which is the **Usage limit** cell.
+
+**Resumed sessions.** Claude Code counts a session from its first launch, so a session you resume days later reports its whole lifetime: its age and its dollar figure cover all of it. Work Atlas only counts what happens while it is running. When those differ, a note under the status line says which figures cover the whole session and which only what Work Atlas has watched.
 
 Under them, one line says what is happening now: `Running shell: npm test`, `Claude is thinking`, `Waiting for your answer`.
 

@@ -3,7 +3,7 @@ import type { TestBody } from 'claude-code/testing'
 
 import type { Board, Entry } from '../types'
 import { atOnce, drawHud } from './hud'
-import { classify, classifyShell, shortModel } from './classify'
+import { classify, classifyShell, formatMs, shortModel } from './classify'
 import { breakdown } from './time'
 import { THEMES } from './palette'
 import { agentLeft, backgroundTaskOf, backgrounded, closed, closedWhere, opened, readTaskNotice, turnBegan, turnEnded } from './ledger'
@@ -259,6 +259,49 @@ describe('the ledger', () => {
     expect(readTaskNotice('<task-notification><task-id>bash_3</task-id><status>failed</status></task-notification>')).toEqual({ task: 'bash_3', outcome: 'err' })
     expect(readTaskNotice('<task-notification><task-id>mon_1</task-id></task-notification>')).toEqual({ task: 'mon_1' })
     expect(readTaskNotice('please fix the <task-id>x</task-id> bug')).toBeUndefined()
+  })
+})
+
+describe('a long or resumed session', () => {
+  test('durations read in the largest units that fit', async () => {
+    expect(formatMs(420)).toBe('420 ms')
+    expect(formatMs(4_200)).toBe('4.2 s')
+    expect(formatMs(59_600)).toBe('60 s')
+    expect(formatMs(73_000)).toBe('1m 13s')
+    expect(formatMs(3_599_600)).toBe('1h 00m')
+    expect(formatMs(2 * 3_600_000 + 5 * 60_000)).toBe('2h 05m')
+    // 33521 minutes and 43 seconds: twenty-three days, not a five-digit count of minutes.
+    expect(formatMs(33_521 * 60_000 + 43_000)).toBe('23d 7h')
+  })
+
+  const now = 5_000_000_000
+  const base: Board = { entries: [], counts: { shell: 4 }, faults: {}, agents: [], files: {}, turns: [], tokens: { input: 0, output: 0, cached: 0 }, cost: 471.85, context: 52 }
+  const draw = (board: Board): string => drawHud({ board, view: { tab: 'overview', range: 'all' }, window: { from: now - 60_000, to: now }, rangeLabel: 'session', now, core: 'CLAUDE', theme: 'nebula', width: 520, height: 900 })
+
+  test('a session joined late says which figures are of all of it and which of what was watched', async () => {
+    // Begun 23 days ago; Work Atlas first ran in it twelve minutes ago.
+    const hud = draw({ ...base, startedAt: now - 33_521 * 60_000, watchedFrom: now - 12 * 60_000 })
+    expect(hud).toContain('SESSION AGE')
+    expect(hud).toContain('>23d 7h<')
+    expect(hud).toContain('watched 12m')
+    expect(hud).toContain('This session began 23d ago.')
+    expect(hud).toContain('has watched the last 12m.')
+    expect(hud).not.toContain('/hour')
+  })
+
+  test('a session watched from its start carries no such note', async () => {
+    const hud = draw({ ...base, startedAt: now - 20 * 60_000, watchedFrom: now - 20 * 60_000 + 5_000 })
+    expect(hud).toContain('>SESSION<')
+    expect(hud).not.toContain('This session began')
+  })
+
+  test('on a subscription the dollar figure is what the work was worth, not a charge', async () => {
+    const onPlan = draw({ ...base, limits: [{ kind: 'seven_day', percent: 6 }] })
+    expect(onPlan).toContain('API VALUE')
+    expect(onPlan).toContain('>not billed<')
+    const onApi = draw(base)
+    expect(onApi).toContain('>COST<')
+    expect(onApi).toContain('>whole session<')
   })
 })
 
