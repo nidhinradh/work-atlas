@@ -1,6 +1,6 @@
 {
   "name": "work-atlas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A live dashboard of the session beside the chat: what Claude is doing, what it cost, where the time went, which files it touched and what failed",
   "author": {
     "name": "Nidhin",
