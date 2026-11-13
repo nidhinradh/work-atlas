@@ -1,0 +1,63 @@
+{
+  "name": "work-atlas",
+  "version": "0.1.0",
+  "description": "A live dashboard of the session beside the chat: what Claude is doing, what it cost, where the time went, which files it touched and what failed",
+  "author": {
+    "name": "Nidhin",
+    "url": "https://github.com/nidhinradh"
+  },
+  "homepage": "https://github.com/nidhinradh/work-atlas",
+  "repository": "https://github.com/nidhinradh/work-atlas",
+  "license": "MIT",
+  "keywords": [
+    "mod",
+    "dashboard",
+    "observability",
+    "timeline",
+    "cost",
+    "context",
+    "tool calls",
+    "subagents"
+  ],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "coreName": {
+      "type": "string",
+      "title": "Centre label",
+      "default": "CLAUDE",
+      "description": "Text shown in the middle of the activity map. Maximum 10 characters."
+    },
+    "memoryServers": {
+      "type": "string",
+      "multiple": true,
+      "title": "Memory MCP servers",
+      "default": [
+        "memory"
+      ],
+      "description": "Names of MCP servers that provide memory. Calls to their tools are counted as Memory instead of Network or Tools."
+    },
+    "cellShape": {
+      "type": "number",
+      "title": "Row height ÷ column width",
+      "default": 2.25,
+      "description": "Ratio of the pane's text row height to its column width, between 1.2 and 4. Used to size the drawing to the pane's height. Increase it if there is a gap under the drawing; decrease it if the pane scrolls."
+    },
+    "theme": {
+      "type": "string",
+      "title": "Theme",
+      "options": [
+        "nebula",
+        "dark",
+        "light"
+      ],
+      "default": "nebula",
+      "description": "Starting theme: nebula (navy and cyan, with glow), dark (neutral greys) or light (paper and ink). You can switch any time from the theme menu in the pane."
+    },
+    "alerts": {
+      "type": "boolean",
+      "title": "Usage alerts",
+      "default": true,
+      "description": "Show a one-time notice when the context window is over 85% full, and another when a usage limit is over 90%."
+    }
+  }
+}
