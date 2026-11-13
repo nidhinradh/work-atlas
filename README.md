@@ -4,7 +4,9 @@ A mod (plugin) for [Claude Code](https://claude.com/claude-code). It runs only i
 
 It puts a live dashboard of the session in a pane beside the chat: what Claude is doing right now, what it has cost, where the time went, which files it touched and what failed.
 
-![Work Atlas running in the Claude desktop app's Code tab](docs/demo.gif)
+![A Claude Code session in the desktop app, with Work Atlas beside the chat updating as subagents run](docs/demo-session.gif)
+
+*A real session in the Claude desktop app: Work Atlas, on the right, follows along as Claude plans, runs three subagents, writes a script and runs it.*
 
 ## Install
 
@@ -79,6 +81,10 @@ Eight figures stay at the top of every tab. They are always totals for the sessi
 | Session | How long the session has run |
 
 Under them, one line says what is happening now: `Running shell: npm test`, `Claude is thinking`, `Waiting for your answer`.
+
+Four tabs sit above the figures: Overview, Timeline, Files and Log.
+
+![Switching between the Timeline, Files and Log tabs](docs/demo-tabs.gif)
 
 ### Overview
 
