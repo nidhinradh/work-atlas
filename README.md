@@ -6,23 +6,41 @@ A mod for Claude Code that puts a live dashboard of the session in a pane beside
 
 ## Install
 
-Inside a Claude Code terminal session, type:
+Run this in your system terminal (Terminal, iTerm, PowerShell), not inside Claude:
+
+```bash
+claude plugin install work-atlas --marketplace nidhinradh/work-atlas --scope user
+```
+
+That installs it for every project and every session, including the Claude desktop app. Start a new session to see it.
+
+**If you are in the Claude desktop app:** typing `/plugin install …` there does not work. It opens the Plugins page, which lists only the official directory. Use the terminal command above. Once installed that way, Work Atlas loads in the desktop app too.
+
+**If you are in a Claude Code terminal session** (the `claude` command-line app), you can install from its prompt instead:
 
 ```
 /plugin install work-atlas --marketplace nidhinradh/work-atlas
 ```
 
-Confirm adding the marketplace with `y`, then pick a scope. Pick **user** if you want Work Atlas in all your projects and sessions.
-
-From a shell:
-
-```bash
-claude plugin install work-atlas --marketplace nidhinradh/work-atlas
-```
-
-The desktop app has no `/plugin` command. There, use the **+** button beside the prompt box → **Plugins** → **Add marketplace**, enter `nidhinradh/work-atlas`, and choose **Add plugin**. Installing from a terminal at user scope also makes it available in the desktop app.
+Confirm adding the marketplace with `y`, then pick the **user** scope.
 
 Work Atlas opens its pane automatically at the start of each session. If you close the pane, `/work-atlas` brings it back.
+
+To update later:
+
+```bash
+claude plugin marketplace update work-atlas
+```
+
+```bash
+claude plugin update work-atlas@work-atlas
+```
+
+To remove it:
+
+```bash
+claude plugin uninstall work-atlas@work-atlas
+```
 
 ## What it shows
 
